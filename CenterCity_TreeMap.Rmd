@@ -1,0 +1,37 @@
+## Philadelphia Tree Map
+
+A map of trees located in Center City, Philadelphia, PA.  
+
+Data from [OpenDataPhilly](https://www.opendataphilly.org/)   
+
+##### Click on the spheres to zoom. Click on the tree icons to see the species name (if documented).
+
+```{r, echo=FALSE, message=FALSE}
+library(dplyr)
+library(stringr)
+library(leaflet)
+
+df <- read.csv("tree_export.csv")
+
+df_trees <- select(df, Point.X, Point.Y, Postal.Code, Species)
+
+zipcodes <- c(19102, 19103, 19106, 19107, 19146, 19147)
+
+df_centercity <- filter(df_trees, Postal.Code %in% zipcodes)
+df_centercity$Species <- as.character(df_centercity$Species)
+df_centercity <- mutate(df_centercity, Species=replace(Species, Species=="", "Undocumented"))
+df_centercity <- mutate(df_centercity, Species=str_to_title(Species))
+
+tree_icon <- makeIcon(iconUrl = "tree_icon.png",
+                      iconWidth = 29,
+                      iconHeight = 31)
+
+df_centercity %>% 
+        leaflet() %>% 
+        addTiles() %>%
+        addMarkers(lng=df_centercity$Point.X,
+                   lat=df_centercity$Point.Y,
+                   icon=tree_icon,
+                   popup = df_centercity$Species,
+                   clusterOptions = markerClusterOptions())
+```
